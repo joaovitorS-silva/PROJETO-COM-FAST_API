@@ -14,9 +14,9 @@ class Usuarios(base):
     __tablename__ = "usuarios"
 
     id = Column("id" ,Integer, primary_key=True, autoincrement=True)
-    nome = Column("nome usuario", String,)
-    email = Column("email" ,String , nullable=False)
-    senha =Column("senha" ,String ,)
+    nome = Column("nome usuario", String)
+    email = Column("email" ,String)
+    senha =Column("senha" ,String )
     numero =Column("telefone" ,String)
     adm = Column("adiminstrador", Boolean, default=False)
     ativo =Column("ativo" ,Boolean)
@@ -44,11 +44,11 @@ class Pedido(base):
     #)
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     status = Column("status", String)
-    usuario = Column("usuario", ForeignKey("usuarios.id"))
+    id_usuario = Column("usuario", ForeignKey("usuarios.id"))
     #itens = 
     preco = Column("valor do pedido", Float)
 
-    def __init__(self, usuario, preco, status="PENDENTE"):
+    def __init__(self, usuario, preco=0, status="PENDENTE"):
         self.usuario = usuario
         self.status = status
         self.preco = preco
