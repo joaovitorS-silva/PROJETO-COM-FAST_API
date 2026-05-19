@@ -49,7 +49,7 @@ class Pedido(base):
     preco = Column("valor do pedido", Float)
 
     def __init__(self, usuario, preco=0, status="PENDENTE"):
-        self.usuario = usuario
+        self.id_usuario = usuario   
         self.status = status
         self.preco = preco
         
