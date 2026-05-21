@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine , Integer, Boolean, Float, String, ForeignKey, Column
-from sqlalchemy.orm import declarative_base   
+from sqlalchemy.orm import declarative_base , relationship   
 
 
 #from sqlalchemy.types import ChoiceType
@@ -45,8 +45,8 @@ class Pedido(base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     status = Column("status", String)
     id_usuario = Column("usuario", ForeignKey("usuarios.id"))
-    #itens = 
     preco = Column("valor do pedido", Float)
+    itens = relationship("ItemPedido", cascade = "all , delete")
 
     def __init__(self, usuario, preco=0, status="PENDENTE"):
         self.id_usuario = usuario   
@@ -54,7 +54,10 @@ class Pedido(base):
         self.preco = preco
         
     def calcular_preco(self):
-        self.preco = 10
+        preco_pedido = 0
+        for item in self.itens:
+            preco_item = item.preco_unitario * item.quantidade
+        preco_pedido += preco_item
     
     #itens do pedido
 class ItemPedido(base):
