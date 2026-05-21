@@ -18,7 +18,7 @@ class Usuarios(base):
     email = Column("email" ,String)
     senha =Column("senha" ,String )
     numero =Column("telefone" ,String)
-    adm = Column("adiminstrador", Boolean, default=False)
+    adm = Column("adiminstrador", Boolean,default=False)
     ativo =Column("ativo" ,Boolean)
 
     def __init__(self,nome, email, senha, numero, ativo=True, adm= False):
@@ -53,21 +53,25 @@ class Pedido(base):
         self.status = status
         self.preco = preco
         
+    def calcular_preco(self):
+        self.preco = 10
     
     #itens do pedido
-class itenspedido(base):
+class ItemPedido(base):
     __tablename__ = ("itens_pedido")
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     tamanho = Column("tamanho", String)
+    quantidade = Column("quantidade", Integer)
     sabor = Column("sabor", String)
     preco_unitario = Column("preco_unitario", Float)
     pedido = Column("numero_pedido", ForeignKey("pedidos.id"))
 
-    def __init__(self, tamanho, sabor, preco_unitario, pedido):
+    def __init__(self, tamanho,quantidade, sabor, preco_unitario, pedido):
         self.tamanho = tamanho
+        self.quantidade = quantidade
         self.sabor = sabor
         self.preco_unitario = preco_unitario
         self.pedido = pedido
-
+      
         
 

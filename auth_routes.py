@@ -26,7 +26,7 @@ def verificar_login(senha, email, session):
         return False
     elif not password_hash.verify(senha, usuario.senha):
         return False
-
+    
     return usuario
 
 @auth_router.get("/")
@@ -41,12 +41,12 @@ async def home():
 async def criar(usuario_schema: UsuarioSchema, session: Session = Depends(pegar_sessao)): #estrutura de tipagem de schemas para ficar mais rapido na execução
     usuario = session.query(Usuarios).filter(Usuarios.email==usuario_schema.email).first()
     if usuario:
-
+        
         raise HTTPException(status_code=404, detail="usuario ja cadastrado" ) 
     else:
 
         senha_criptografada = password_hash.hash(usuario_schema.senha)
-        novo_usuario = Usuarios( usuario_schema.nome, usuario_schema.email, senha_criptografada,  usuario_schema.numero)
+        novo_usuario = Usuarios( usuario_schema.nome, usuario_schema.email, senha_criptografada,  usuario_schema.numero,usuario_schema.ativo, usuario_schema.adm)
         session.add(novo_usuario)
         session.commit()
         return{"mensagem": f"novo usuario cadastrado com sucesso {usuario_schema.email}"}
