@@ -6,8 +6,8 @@ class UsuarioSchema(BaseModel):
     email: str
     senha: str
     numero: str
-    ativo: Optional[bool]
-    adm: Optional[bool]
+    ativo: Optional[bool] 
+    adm: Optional[bool] 
 
     class Config:
         from_attributes = True # esse comando faz com que a classe UsuarioSchemas
@@ -30,3 +30,13 @@ class LoginSchemas(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ItemPedidoSchema(BaseModel):
+    tamanho: str
+    quantidade: str
+    sabor: str
+    preco_unitario: float
+   
+    class Config:
+        from_attributes = True
+
