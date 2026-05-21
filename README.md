@@ -269,5 +269,5 @@ alembic history
 ---
 
 ## Autor
-
-Desenvolvido com FastAPI.
+João Vitor da Silva Santos 2º Ano — Informática para Internet - IFRN Campus Caicó
+Desenvolvido com FastAPI
