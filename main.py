@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI 
 from fastapi.security import OAuth2PasswordBearer # cria estrutura de token que estamos usando
-from dotenv import load_dotenv
+from dotenv import load_dotenv 
 import os
 
 load_dotenv()#consigo acessar o aquivo env

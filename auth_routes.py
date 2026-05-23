@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends , HTTPException  
 from modelos import Usuarios
-from dependencias import pegar_sessao , password_hash, verificar_token
+from dependencias import pegar_sessao , password_hash, verificar_token , verificar_refresh_token
 from schemas import UsuarioSchema, LoginSchemas
 from sqlalchemy.orm import Session
 from jose import JWTError , jwt
@@ -13,18 +13,18 @@ auth_router = APIRouter(prefix="/auth", tags=["autenticaçao"])
 
 #token de acesso pois, toda vez que um usuario logar vai receber
 #  token e reutilizae em outros endpoints
-def criar_token(id_usuario, duracao_token=timedelta(minutes=ACCES_TOKEN_EXPIRE_MINUTES) ):
+def criar_token(id_usuario,duracao_token=timedelta(minutes=ACCES_TOKEN_EXPIRE_MINUTES), tipo="access" ):
     data_expiracao = datetime.now(timezone.utc) + duracao_token
-    dict_info = {"sub": str(id_usuario), "exp": data_expiracao}
+    dict_info = {"sub": str(id_usuario), "exp": data_expiracao, "type": tipo}
     jwt_codificado = jwt.encode(dict_info, SECRET_KEY, ALGORITHM)
     return jwt_codificado
 
 
 def verificar_login(senha, email, session):
     usuario = session.query(Usuarios).filter(Usuarios.email==email).first()
-    if not usuario:
+    if not usuario: # SE NAO USUARIO (EMAIL), RETORNA FALSE,
         return False
-    elif not password_hash.verify(senha, usuario.senha):
+    elif not password_hash.verify(senha, usuario.senha): # SE NAO (verify serve pra vericar a senha criptografada sem descriptografar) e veficar se as info batem
         return False
     
     return usuario
@@ -34,17 +34,16 @@ async def home():
     """
     essa é rota padrão de autenticação  do nosso sistema
     """
-    return{"mensagem": "vc estar autenticado", "autenticado": False}
+    return{"mensagem": "vc NÃO estar  autenticado", 
+           "autenticado": False}
 
 
 @auth_router.post("/criar_usuario")
 async def criar(usuario_schema: UsuarioSchema, session: Session = Depends(pegar_sessao)): #estrutura de tipagem de schemas para ficar mais rapido na execução
     usuario = session.query(Usuarios).filter(Usuarios.email==usuario_schema.email).first()
     if usuario:
-        
         raise HTTPException(status_code=404, detail="usuario ja cadastrado" ) 
     else:
-
         senha_criptografada = password_hash.hash(usuario_schema.senha)
         novo_usuario = Usuarios( usuario_schema.nome, usuario_schema.email, senha_criptografada,  usuario_schema.numero,usuario_schema.ativo, usuario_schema.adm)
         session.add(novo_usuario)
@@ -58,8 +57,8 @@ async def login(login_schema: LoginSchemas, session: Session = Depends(pegar_ses
     if not usuario:
         raise HTTPException(status_code=400, detail="usuario nao encontrado ou credencias e icorretas")
     else:
-        access_token = criar_token(usuario.id)
-        refresh_token = criar_token(usuario.id, duracao_token=timedelta(days=7))
+        access_token = criar_token(usuario.id, tipo = "access")  # revvisar isso (token)
+        refresh_token = criar_token(usuario.id, duracao_token=timedelta(days=7), tipo = "refresh")
         return{
             "access_token": access_token,
             "refresh_token":refresh_token, # esse token caso usuario saia eele apenas vai precisar colocar a senha durante 7 dias , e dps precisa pegar access token de volta
@@ -72,7 +71,7 @@ async def login_form(dados_form: OAuth2PasswordRequestForm= Depends(), session: 
     if not usuario:
         raise HTTPException(status_code=400, detail="usuario nao encontrado ou credencias e icorretas")
     else:
-        access_token = criar_token(usuario.id)
+        access_token = criar_token(usuario.id, tipo="access")
         return{
             "access_token": access_token,
             "token_type": "bearer"
@@ -82,8 +81,9 @@ async def login_form(dados_form: OAuth2PasswordRequestForm= Depends(), session: 
 
 
 @auth_router.get("/refresh_token")
-async def resfresh_token(usuario: Usuarios=Depends(verificar_token) ):
-    access_token = criar_token(usuario.id)
+async def resfresh_token(usuario: Usuarios=Depends(verificar_refresh_token) ):
+
+    access_token = criar_token(usuario.id, tipo = "access")
     return{
         "access_token":access_token,
         "token_type": "bearer"
