@@ -1,6 +1,6 @@
 
 from fastapi import Depends , HTTPException
-from modelos import bd, Usuarios
+from app.modelos import bd, Usuarios
 from sqlalchemy.orm import sessionmaker, Session
 from pwdlib import PasswordHash
 from jose import jwt , JWTError # O JWTERROR DISPARA PARA ERROS DE AUTENTICAÇÃO OU EXPIRAÇÃO (TOKEN)

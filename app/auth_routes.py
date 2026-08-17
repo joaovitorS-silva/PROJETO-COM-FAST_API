@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends , HTTPException  
-from modelos import Usuarios
-from dependencias import pegar_sessao , password_hash, verificar_token , verificar_refresh_token
-from schemas import UsuarioSchema, LoginSchemas
+from fastapi import APIRouter, Depends , HTTPException
+from app.modelos import Usuarios
+from app.dependencias import pegar_sessao , password_hash, verificar_token , verificar_refresh_token
+from app.schemas import UsuarioSchema, LoginSchemas
 from sqlalchemy.orm import Session
 from jose import JWTError , jwt
 from datetime import datetime, timezone, timedelta
@@ -67,7 +67,7 @@ async def login(login_schema: LoginSchemas, session: Session = Depends(pegar_ses
     
 @auth_router.post("/login-form")
 async def login_form(dados_form: OAuth2PasswordRequestForm= Depends(), session: Session = Depends(pegar_sessao)):
-    usuario = verificar_login(dados_form.username, dados_form.password, session)
+    usuario = verificar_login(dados_form.password, dados_form.username, session)
     if not usuario:
         raise HTTPException(status_code=400, detail="usuario nao encontrado ou credencias e icorretas")
     else:

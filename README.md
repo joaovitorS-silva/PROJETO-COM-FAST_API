@@ -1,130 +1,172 @@
 # PedidosAPI
 
-> API RESTful para gerenciamento de pedidos (estilo delivery/pizzaria) com autenticação JWT — construída com **FastAPI** e **SQLAlchemy**.
+API REST para gerenciamento de pedidos com autenticação JWT, construída com FastAPI, SQLAlchemy e MySQL.
 
----
+## Visão geral
 
-## Índice
+Este projeto permite:
 
-- [Sobre](#sobre)
-- [Tecnologias](#tecnologias)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Instalação](#instalação)
-- [Variáveis de Ambiente](#variáveis-de-ambiente)
-- [Rodando o Projeto](#rodando-o-projeto)
-- [Rotas da API](#rotas-da-api)
-- [Modelos do Banco de Dados](#modelos-do-banco-de-dados)
-- [Autenticação](#autenticação)
-- [Migrações com Alembic](#migrações-com-alembic)
+- cadastro de usuários
+- login com JWT
+- geração de access token e refresh token
+- criação de pedidos
+- adição e remoção de itens do pedido
+- controle de acesso por usuário e administrador
+- documentação interativa via Swagger
 
----
+## Tecnologias utilizadas
 
-## Sobre
+- Python 3.11+
+- FastAPI
+- Uvicorn
+- SQLAlchemy
+- MySQL + PyMySQL
+- Pydantic
+- python-jose
+- pwdlib
+- python-dotenv
+- Alembic
 
-PedidosAPI é uma API de gerenciamento de pedidos com sistema de autenticação baseado em **JWT (JSON Web Tokens)**. Permite cadastro de usuários, login seguro com tokens de acesso e refresh, criação de pedidos, adição de itens e controle de status — com controle de acesso separado entre usuários comuns e administradores.
+## Estrutura do projeto
 
----
-
-## Tecnologias
-
-| Tecnologia | Uso |
-|---|---|
-| [FastAPI](https://fastapi.tiangolo.com/) | Framework principal da API |
-| [SQLAlchemy](https://www.sqlalchemy.org/) | ORM para banco de dados |
-| [Alembic](https://alembic.sqlalchemy.org/) | Migrações do banco de dados |
-| [MySQL + PyMySQL](https://pypi.org/project/PyMySQL/) | Banco de dados |
-| [python-jose](https://github.com/mpdavis/python-jose) | Geração e verificação de JWT |
-| [pwdlib](https://pypi.org/project/pwdlib/) | Hash seguro de senhas |
-| [python-dotenv](https://pypi.org/project/python-dotenv/) | Gerenciamento de variáveis de ambiente |
-| [Pydantic](https://docs.pydantic.dev/) | Validação e schemas de dados |
-
----
-
-## Estrutura do Projeto
-
-```
+```text
 PROJETO-COM-FAST_API/
-├── alembic/                  # Migrações do banco de dados
-│   ├── versions/             # Arquivos de migração gerados
-│   └── env.py                # Configuração do Alembic
-├── PROJETO-COM-FAST_API/
-│   ├── main.py               # Ponto de entrada e configurações globais
-│   ├── modelos.py            # Modelos do banco de dados (ORM)
-│   ├── schemas.py            # Schemas Pydantic para validação
-│   ├── dependencias.py       # Sessão do banco e verificação de token
-│   ├── auth_routes.py        # Rotas de autenticação
-│   └── order_routes.py       # Rotas de pedidos
-├── alembic.ini               # Configuração do Alembic
-├── .env                      # Variáveis de ambiente (não versionar!)
-└── .gitignore
+├── app/
+│   ├── __init__.py
+│   ├── auth_routes.py
+│   ├── dependencias.py
+│   ├── modelos.py
+│   ├── order_routes.py
+│   └── schemas.py
+├── migraçoes/
+├── versions/
+├── main.py
+├── .env
+├── .env.example
+├── .gitignore
+├── README.md
+├── alembic.ini
+├── banco.db
+└── requirements.txt
 ```
 
----
+> O projeto foi reorganizado em uma pasta `app` para deixar a estrutura mais limpa e mais profissional.
 
-## Instalação
+## Requisitos
+
+Antes de começar, tenha instalado:
+
+- Python 3.11 ou superior
+- MySQL Server
+- Git
+- pip
+
+## Configuração do ambiente
+
+### 1. Clone o repositório
 
 ```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/pedidos-api.git
-cd pedidos-api
-
-# Crie e ative um ambiente virtual
-python -m venv venv
-venv\Scripts\activate      # Windows
-source venv/bin/activate   # Linux/Mac
-
-# Instale as dependências
-pip install fastapi sqlalchemy alembic pymysql python-jose pwdlib python-dotenv uvicorn pydantic
+git clone <URL_DO_SEU_REPOSITORIO>
+cd PROJETO-COM-FAST_API
 ```
 
----
+### 2. Crie um ambiente virtual
 
-## Variáveis de Ambiente
+Windows:
 
-Crie um arquivo `.env` na raiz do projeto:
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+Linux/macOS:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Instale as dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+Se o arquivo `requirements.txt` ainda não existir, instale manualmente:
+
+```bash
+pip install fastapi uvicorn sqlalchemy pymysql python-jose pwdlib python-dotenv alembic python-multipart argon2-cffi
+```
+
+### 4. Configure as variáveis de ambiente
+
+Copie o arquivo de exemplo:
+
+```bash
+copy .env.example .env
+```
+
+Ou no Linux/macOS:
+
+```bash
+cp .env.example .env
+```
+
+Edite o arquivo `.env` com suas configurações reais:
 
 ```env
-SECRET_KEY=sua_chave_secreta_super_segura
+SECRET_KEY=sua_chave_super_secreta
 ALGORITHM=HS256
 ACCES_TOKEN_EXPIRE_MINUTES=30
 ```
 
-> **Nunca** versione o `.env` com credenciais reais. Adicione-o ao `.gitignore`.
+> Nunca envie o arquivo `.env` para o GitHub. Ele está ignorado no `.gitignore`.
 
----
+## Banco de dados
 
-## Rodando o Projeto
+O projeto está configurado para usar MySQL com a base `bd_pedidos`.
+
+### Crie o banco no MySQL
+
+```sql
+CREATE DATABASE bd_pedidos;
+```
+
+No arquivo `app/modelos.py`, a conexão está configurada assim:
+
+```python
+bd = create_engine("mysql+pymysql://root:1234@localhost/bd_pedidos")
+```
+
+Se o seu usuário, senha e nome do banco forem diferentes, ajuste essa string antes de rodar o projeto.
+
+## Rodando o projeto
+
+Na raiz do projeto, execute:
 
 ```bash
-# Aplicar as migrações no banco de dados
-alembic upgrade head
-
-# Iniciar o servidor
 uvicorn main:app --reload
 ```
 
-A API estará disponível em `http://127.0.0.1:8000`
+A aplicação ficará disponível em:
 
-Documentação interativa (Swagger UI): `http://127.0.0.1:8000/docs`
+- API: http://127.0.0.1:8000
+- Swagger UI: http://127.0.0.1:8000/docs
+- Redoc: http://127.0.0.1:8000/redoc
 
----
+## Endpoints principais
 
-## Rotas da API
+### Autenticação
 
-### Autenticação — `/auth`
+#### Cadastro de usuário
 
-| Método | Rota | Descrição | Auth? |
-|---|---|---|---|
-| `GET` | `/auth/` | Rota de status de autenticação | Não |
-| `POST` | `/auth/criar_usuario` | Cadastro de novo usuário | Não |
-| `POST` | `/auth/login` | Login via JSON (email + senha) | Não |
-| `POST` | `/auth/login-form` | Login via formulário OAuth2 (Swagger) | Não |
-| `GET` | `/auth/refresh_token` | Gera novo access token com refresh token | Sim |
+```http
+POST /auth/criar_usuario
+```
 
-#### Criar usuário
+Body de exemplo:
 
 ```json
-POST /auth/criar_usuario
 {
   "nome": "João Silva",
   "email": "joao@email.com",
@@ -135,10 +177,13 @@ POST /auth/criar_usuario
 }
 ```
 
-#### Login
+#### Login com JSON
+
+```http
+POST /auth/login
+```
 
 ```json
-POST /auth/login
 {
   "email": "joao@email.com",
   "senha": "minhasenha123"
@@ -146,128 +191,164 @@ POST /auth/login
 ```
 
 Resposta:
+
 ```json
 {
-  "access_token": "<jwt_token>",
-  "refresh_token": "<jwt_refresh_token>",
+  "access_token": "<token>",
+  "refresh_token": "<refresh_token>",
   "token_type": "bearer"
 }
 ```
 
----
+#### Login via formulário OAuth2
 
-### Pedidos — `/pedidos`
+```http
+POST /auth/login-form
+```
 
-> Todas as rotas de pedidos exigem autenticação via Bearer Token.
+Esse endpoint é útil para testar no Swagger.
 
-| Método | Rota | Descrição | Admin? |
-|---|---|---|---|
-| `GET` | `/pedidos/` | Rota de status dos pedidos | Não |
-| `GET` | `/pedidos/lista` | Lista todos os pedidos | Sim |
-| `POST` | `/pedidos/pedido` | Cria um novo pedido | Sim |
-| `POST` | `/pedidos/pedido/cancelar/{id_pedido}` | Cancela um pedido | Sim ou dono |
-| `POST` | `/pedidos/adicionar-item{id_pedido}` | Adiciona item a um pedido | Não |
+#### Renovar access token
+
+```http
+GET /auth/refresh_token
+```
+
+### Pedidos
 
 #### Criar pedido
 
-```json
+```http
 POST /pedidos/pedido
 Authorization: Bearer <access_token>
+```
 
+Body:
+
+```json
 {
   "id_usuario": 1
 }
 ```
 
+#### Listar pedidos
+
+```http
+GET /pedidos/lista
+Authorization: Bearer <access_token>
+```
+
 #### Adicionar item ao pedido
 
-```json
-POST /pedidos/adicionar-item1
+```http
+POST /pedidos/adicionar-item/1
 Authorization: Bearer <access_token>
+```
 
+Body:
+
+```json
 {
   "tamanho": "grande",
   "quantidade": 2,
   "sabor": "frango com catupiry",
-  "preco_unitario": 49.90
+  "preco_unitario": 49.9
 }
 ```
 
----
+#### Remover item do pedido
 
-## Modelos do Banco de Dados
-
-### `Usuarios`
-
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | Integer | Chave primária |
-| `nome` | String | Nome do usuário |
-| `email` | String | E-mail (usado no login) |
-| `senha` | String | Senha criptografada com hash |
-| `numero` | String | Telefone |
-| `ativo` | Boolean | Conta ativa (padrão: `True`) |
-| `adm` | Boolean | Administrador (padrão: `False`) |
-
-### `Pedido`
-
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | Integer | Chave primária |
-| `status` | String | `PENDENTE`, `CONCLUIDO` ou `CANCELADO` |
-| `id_usuario` | FK → `usuarios.id` | Usuário dono do pedido |
-| `preco` | Float | Valor total do pedido |
-
-### `ItemPedido`
-
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | Integer | Chave primária |
-| `tamanho` | String | Tamanho do item |
-| `quantidade` | Integer | Quantidade |
-| `sabor` | String | Sabor do item |
-| `preco_unitario` | Float | Preço unitário |
-| `pedido` | FK → `pedidos.id` | Pedido associado |
-
----
-
-## Autenticação
-
-O sistema usa **JWT (JSON Web Tokens)** com dois tipos de token:
-
-- **Access Token** — Válido por `ACCES_TOKEN_EXPIRE_MINUTES` minutos. Usado para acessar rotas protegidas.
-- **Refresh Token** — Válido por **7 dias**. Permite renovar o access token sem precisar fazer login novamente.
-
-Para acessar rotas protegidas, envie o token no header:
-
-```
+```http
+POST /pedidos/remover-item/1
 Authorization: Bearer <access_token>
 ```
 
-O esquema OAuth2 está configurado em `/auth/login-form`, compatível com o botão **Authorize** do Swagger em `/docs`.
+#### Cancelar pedido
 
----
+```http
+POST /pedidos/pedido/cancelar/1
+Authorization: Bearer <access_token>
+```
+
+#### Visualizar pedido
+
+```http
+GET /pedidos/visualizar/1
+Authorization: Bearer <access_token>
+```
+
+## Autenticação
+
+O projeto utiliza JWT para autenticação.
+
+- Access Token: usado para acessar rotas protegidas
+- Refresh Token: usado para renovar o access token
+
+Para testar no Swagger ou em requisições HTTP, envie no header:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+## Modelos principais
+
+### Usuario
+
+- id
+- nome
+- email
+- senha
+- numero
+- ativo
+- adm
+
+### Pedido
+
+- id
+- status
+- id_usuario
+- preco
+- itens
+
+### ItemPedido
+
+- id
+- tamanho
+- quantidade
+- sabor
+- preco_unitario
+- id_pedido
 
 ## Migrações com Alembic
 
+Se quiser usar migrações:
+
 ```bash
-# Gerar uma nova migração automaticamente
-alembic revision --autogenerate -m "descricao da alteracao"
-
-# Aplicar todas as migrações pendentes
+alembic revision --autogenerate -m "descricao da migracao"
 alembic upgrade head
-
-# Voltar uma migração
-alembic downgrade -1
-
-# Ver o histórico de migrações
-alembic history
 ```
 
-> O arquivo `alembic.ini` deve estar na raiz do projeto e o comando deve ser executado a partir dessa mesma pasta.
+Para voltar uma migração:
 
----
+```bash
+alembic downgrade -1
+```
+
+## Segurança
+
+Antes de subir para o GitHub:
+
+- nunca envie o arquivo `.env`
+- nunca envie credenciais reais
+- nunca publique tokens ou chaves secretas
+- adicione o `.env` no `.gitignore`
+
+## Observações finais
+
+Este projeto já está em uma estrutura mais organizada para continuar evoluindo, porém ainda depende de alguns ajustes de ambiente local, principalmente na conexão do banco e no preenchimento correto do `.env`.
+
+Se qualquer configuração local for diferente da sua máquina, ajuste os valores antes de iniciar o servidor.
 
 ## Autor
-João Vitor da Silva Santos 2º Ano — Informática para Internet - IFRN Campus Caicó
-Desenvolvido com FastAPI
+
+Projeto desenvolvido como API de pedidos em FastAPI.
