@@ -351,4 +351,4 @@ Se qualquer configuração local for diferente da sua máquina, ajuste os valore
 
 ## Autor
 
-Projeto desenvolvido como API de pedidos em FastAPI.
+João Vitor Da Silva Santos
